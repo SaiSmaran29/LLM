@@ -1,0 +1,38 @@
+import requests
+import yfinance as yf
+import pandas as pd
+
+# n8n Webhook URL
+webhook_url = "http://localhost:5678/webhook-test/yahoo-finance"
+
+# Stock symbol to test
+payload = {"symbol": "AAPL"}
+
+# Send symbol to n8n webhook
+response = requests.post(webhook_url, json=payload)
+
+if response.status_code == 200:
+    data = response.json()
+    symbol_received = data.get("body", {}).get("symbol", "TSLA")  # fallback to AAPL
+else:
+    symbol_received = "TSLA"  # fallback
+
+# Fetch stock data using yfinance
+stock = yf.Ticker(symbol_received)
+info = stock.info
+
+# Organize data in a table
+df = pd.DataFrame({
+    "Property": ["Name", "Symbol", "Price", "Day High", "Day Low", "Change", "Change %"],
+    "Value": [
+        info.get("longName", "N/A"),
+        info.get("symbol", "N/A"),
+        info.get("regularMarketPrice", "N/A"),
+        info.get("dayHigh", "N/A"),
+        info.get("dayLow", "N/A"),
+        info.get("regularMarketChange", "N/A"),
+        info.get("regularMarketChangePercent", "N/A")
+    ]
+})
+
+print(df)
